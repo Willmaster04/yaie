@@ -2,6 +2,7 @@ use std::env;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+use std::time::{Instant};
 
 use candle_core::{DType, Device, Tensor};
 use candle_nn::VarBuilder;
@@ -56,6 +57,7 @@ fn main() -> anyhow::Result<()> {
     let prompt_length = tokens.len();
     let mut position = 0;
 
+    let now = Instant::now();
     // inference loop
     for n in 0..100 {
         let context = if n == 0 {
@@ -87,6 +89,15 @@ fn main() -> anyhow::Result<()> {
             break;
         }
     }
+    
+    // info metrics
+    let elapsed = now.elapsed();
+    let generated_tokens = tokens.len() - prompt_length;
+    let tokens_per_sec = generated_tokens as f64 / elapsed.as_secs_f64();
+    println!("-----");
+    println!("Took {:.2?} to generate {generated_tokens} tokens ({tokens_per_sec:.2} tokens/sec)", elapsed);
+    println!("-----");
+    println!("OUTPUT:");
 
     // decode tokens back to text
     let output = tokenizer
